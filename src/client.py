@@ -8,7 +8,7 @@ import grpc
 import spec_pb2
 import spec_pb2_grpc
 import time
-from utils import HelpMessages
+from src.utils import HelpMessages
 
 
 class Jarves_Client(cmd.Cmd):
