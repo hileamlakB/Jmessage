@@ -1,6 +1,6 @@
 import unittest
 # Replace with your server file name
-from your_server_file import User, Message, Session, Base, engine
+from ..src.models import User, Message, Session, Base, engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
@@ -18,7 +18,8 @@ class TestDatabase(unittest.TestCase):
         Base.metadata.drop_all(cls.engine)
 
     def setUp(self):
-        self.session = sessionmaker(bind=self.engine)()  # Create a new session for each test
+        # Create a new session for each test
+        self.session = sessionmaker(bind=self.engine)()
 
     def tearDown(self):
         self.session.rollback()  # Rollback any changes made during the test
@@ -193,7 +194,6 @@ class TestDatabase(unittest.TestCase):
             from_username=from_username, to_username=to_usernames[0]).all()
         self.assertEqual(len(filtered_messages), 1)
         self.assertEqual(filtered_messages[0].to_username, to_usernames[0])
-
 
     # Add more test methods for updating and deleting users and messages, and for any additional methods in the User and Message classes
 if __name__ == '__main__':

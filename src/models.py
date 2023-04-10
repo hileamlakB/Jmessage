@@ -1,6 +1,8 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -23,9 +25,11 @@ class MessageModel(Base):
     receiver_id = Column(Integer, ForeignKey('users.id'))
     content = Column(String, nullable=False)
     is_received = Column(Boolean, default=False)
+    time_stamp = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     sender = relationship("UserModel", foreign_keys=[sender_id])
     receiver = relationship("UserModel", foreign_keys=[receiver_id])
+
 
 class DeletedMessageModel(Base):
     __tablename__ = 'deleted_messages'
@@ -39,6 +43,7 @@ class DeletedMessageModel(Base):
 
     sender = relationship("UserModel", foreign_keys=[sender_id])
     receiver = relationship("UserModel", foreign_keys=[receiver_id])
+
 
 def init_db(database_url):
     engine = create_engine(database_url)

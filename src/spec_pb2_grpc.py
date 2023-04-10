@@ -40,6 +40,11 @@ class ClientAccountStub(object):
                 request_serializer=spec__pb2.ReceiveRequest.SerializeToString,
                 response_deserializer=spec__pb2.Messages.FromString,
                 )
+        self.GetChat = channel.unary_unary(
+                '/ClientAccount/GetChat',
+                request_serializer=spec__pb2.ChatRequest.SerializeToString,
+                response_deserializer=spec__pb2.Messages.FromString,
+                )
         self.AcknowledgeReceivedMessages = channel.unary_unary(
                 '/ClientAccount/AcknowledgeReceivedMessages',
                 request_serializer=spec__pb2.AcknowledgeReceivedMessagesRequest.SerializeToString,
@@ -99,6 +104,12 @@ class ClientAccountServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetChat(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def AcknowledgeReceivedMessages(self, request, context):
         """Define an RPC for receiving messages
         """
@@ -146,6 +157,11 @@ def add_ClientAccountServicer_to_server(servicer, server):
             'GetMessages': grpc.unary_unary_rpc_method_handler(
                     servicer.GetMessages,
                     request_deserializer=spec__pb2.ReceiveRequest.FromString,
+                    response_serializer=spec__pb2.Messages.SerializeToString,
+            ),
+            'GetChat': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetChat,
+                    request_deserializer=spec__pb2.ChatRequest.FromString,
                     response_serializer=spec__pb2.Messages.SerializeToString,
             ),
             'AcknowledgeReceivedMessages': grpc.unary_unary_rpc_method_handler(
@@ -260,6 +276,23 @@ class ClientAccount(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def GetChat(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ClientAccount/GetChat',
+            spec__pb2.ChatRequest.SerializeToString,
+            spec__pb2.Messages.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def AcknowledgeReceivedMessages(request,
             target,
             options=(),
@@ -307,5 +340,135 @@ class ClientAccount(object):
         return grpc.experimental.unary_unary(request, target, '/ClientAccount/Logout',
             spec__pb2.DeleteAccountRequest.SerializeToString,
             spec__pb2.ServerResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+
+class MasterSlaveServiceStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.RegisterSlave = channel.unary_unary(
+                '/MasterSlaveService/RegisterSlave',
+                request_serializer=spec__pb2.RegisterSlaveRequest.SerializeToString,
+                response_deserializer=spec__pb2.RegisterSlaveResponse.FromString,
+                )
+        self.UpdateSlave = channel.unary_unary(
+                '/MasterSlaveService/UpdateSlave',
+                request_serializer=spec__pb2.UpdateSlaveRequest.SerializeToString,
+                response_deserializer=spec__pb2.ServerResponse.FromString,
+                )
+        self.HeartbeatCheck = channel.unary_unary(
+                '/MasterSlaveService/HeartbeatCheck',
+                request_serializer=spec__pb2.HeartbeatRequest.SerializeToString,
+                response_deserializer=spec__pb2.HeartbeatResponse.FromString,
+                )
+
+
+class MasterSlaveServiceServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def RegisterSlave(self, request, context):
+        """Define an RPC for registering a slave
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateSlave(self, request, context):
+        """Define an RPC for updating a slave with new data
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def HeartbeatCheck(self, request, context):
+        """Define an RPC for handling heartbeat checks
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_MasterSlaveServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'RegisterSlave': grpc.unary_unary_rpc_method_handler(
+                    servicer.RegisterSlave,
+                    request_deserializer=spec__pb2.RegisterSlaveRequest.FromString,
+                    response_serializer=spec__pb2.RegisterSlaveResponse.SerializeToString,
+            ),
+            'UpdateSlave': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateSlave,
+                    request_deserializer=spec__pb2.UpdateSlaveRequest.FromString,
+                    response_serializer=spec__pb2.ServerResponse.SerializeToString,
+            ),
+            'HeartbeatCheck': grpc.unary_unary_rpc_method_handler(
+                    servicer.HeartbeatCheck,
+                    request_deserializer=spec__pb2.HeartbeatRequest.FromString,
+                    response_serializer=spec__pb2.HeartbeatResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'MasterSlaveService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class MasterSlaveService(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def RegisterSlave(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/MasterSlaveService/RegisterSlave',
+            spec__pb2.RegisterSlaveRequest.SerializeToString,
+            spec__pb2.RegisterSlaveResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpdateSlave(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/MasterSlaveService/UpdateSlave',
+            spec__pb2.UpdateSlaveRequest.SerializeToString,
+            spec__pb2.ServerResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def HeartbeatCheck(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/MasterSlaveService/HeartbeatCheck',
+            spec__pb2.HeartbeatRequest.SerializeToString,
+            spec__pb2.HeartbeatResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

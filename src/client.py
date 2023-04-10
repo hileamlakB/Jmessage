@@ -8,10 +8,10 @@ import grpc
 import spec_pb2
 import spec_pb2_grpc
 import time
-from src.utils import HelpMessages
+from utils import HelpMessages
 
 
-class Jarves_Client(cmd.Cmd):
+class JarvesClientTerminal(cmd.Cmd):
     """
     A simple command-line-based chat client called "Jarves_Client" that allows users to create accounts,
     log in, send messages to other users, and more. The client communicates with a remote server using gRPC.
@@ -23,7 +23,7 @@ class Jarves_Client(cmd.Cmd):
         """
         Initialize the Jarves_Client instance, setting up the gRPC channel, stub, and displaying help message.
         """
-        super(Jarves_Client, self).__init__()
+        super(JarvesClientTerminal, self).__init__()
 
         self.user_session_id = ""
         self.channel = grpc.insecure_channel(f'localhost:{port}')
@@ -150,7 +150,7 @@ class Jarves_Client(cmd.Cmd):
 
     def receive_thread(self):
         """
-        Thread responsible for receiving messages from other users.
+        Thread responsible for receivsignuping messages from other users.
         """
         # Create a stream for receiving messages
         while True:
@@ -180,4 +180,4 @@ class Jarves_Client(cmd.Cmd):
 
 if __name__ == '__main__':
     logging.basicConfig()
-    Jarves_Client(2625).cmdloop()
+    JarvesClientTerminal(2625).cmdloop()
