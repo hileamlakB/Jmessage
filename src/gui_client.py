@@ -23,7 +23,10 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
         self.protocol("WM_DELETE_WINDOW", self.on_exit)
 
     def on_exit(self):
-        self.logout()
+        try:
+            self.logout()
+        except Exception as e:
+            print("Error logging out:", e)
         self.destroy()
 
     def create_widgets(self):
@@ -263,4 +266,4 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
 
 
 if __name__ == "__main__":
-    JarvesClientGUI.run("localhost", 2625)
+    JarvesClientGUI.run("localhost", 2627)

@@ -101,14 +101,20 @@ service MasterService {
   // Define an RPC for registering a slave
   rpc RegisterSlave(RegisterSlaveRequest) returns (RegisterSlaveResponse);
 
-  // Define an RPC for sending updates to all slaves
-  // rpc UpdateSlaves(UpdateSlavesRequest) returns (ServerResponse);
+  // when a slave checks in, master send a response if it doesn't leader elction will be triggered
+  rpc HeartBeat(Empty) returns (Ack);
 }
 
 // Define a gRPC service for slave server communication
 service SlaveService {
   // Define an RPC for accepting updates from the master
   rpc AcceptUpdates(AcceptUpdatesRequest) returns (ServerResponse);
+  rpc UpdateMaster(NewMasterRequest) returns (Ack);
+}
+
+message NewMasterRequest {
+  string new_master_address = 1;
+  string new_master_id = 2;
 }
 
 // Request message for registering a slave
@@ -132,6 +138,10 @@ message UpdateSlavesRequest {
 
 // Request message for accepting updates from the master
 message AcceptUpdatesRequest {
-  String table_name = 1;
-  bytes update_data = 2;
+  bytes update_data = 1;
+}
+
+message Ack {
+  int32 error_code = 1;
+  string error_message = 2;
 }

@@ -359,6 +359,11 @@ class MasterServiceStub(object):
                 request_serializer=spec__pb2.RegisterSlaveRequest.SerializeToString,
                 response_deserializer=spec__pb2.RegisterSlaveResponse.FromString,
                 )
+        self.HeartBeat = channel.unary_unary(
+                '/MasterService/HeartBeat',
+                request_serializer=spec__pb2.Empty.SerializeToString,
+                response_deserializer=spec__pb2.Ack.FromString,
+                )
 
 
 class MasterServiceServicer(object):
@@ -372,6 +377,13 @@ class MasterServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def HeartBeat(self, request, context):
+        """when a slave checks in, master send a response if it doesn't leader elction will be triggered
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MasterServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -379,6 +391,11 @@ def add_MasterServiceServicer_to_server(servicer, server):
                     servicer.RegisterSlave,
                     request_deserializer=spec__pb2.RegisterSlaveRequest.FromString,
                     response_serializer=spec__pb2.RegisterSlaveResponse.SerializeToString,
+            ),
+            'HeartBeat': grpc.unary_unary_rpc_method_handler(
+                    servicer.HeartBeat,
+                    request_deserializer=spec__pb2.Empty.FromString,
+                    response_serializer=spec__pb2.Ack.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -408,6 +425,23 @@ class MasterService(object):
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
+    @staticmethod
+    def HeartBeat(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/MasterService/HeartBeat',
+            spec__pb2.Empty.SerializeToString,
+            spec__pb2.Ack.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
 
 class SlaveServiceStub(object):
     """Define a gRPC service for slave server communication
@@ -424,6 +458,11 @@ class SlaveServiceStub(object):
                 request_serializer=spec__pb2.AcceptUpdatesRequest.SerializeToString,
                 response_deserializer=spec__pb2.ServerResponse.FromString,
                 )
+        self.UpdateMaster = channel.unary_unary(
+                '/SlaveService/UpdateMaster',
+                request_serializer=spec__pb2.NewMasterRequest.SerializeToString,
+                response_deserializer=spec__pb2.Ack.FromString,
+                )
 
 
 class SlaveServiceServicer(object):
@@ -437,6 +476,12 @@ class SlaveServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def UpdateMaster(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_SlaveServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -444,6 +489,11 @@ def add_SlaveServiceServicer_to_server(servicer, server):
                     servicer.AcceptUpdates,
                     request_deserializer=spec__pb2.AcceptUpdatesRequest.FromString,
                     response_serializer=spec__pb2.ServerResponse.SerializeToString,
+            ),
+            'UpdateMaster': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateMaster,
+                    request_deserializer=spec__pb2.NewMasterRequest.FromString,
+                    response_serializer=spec__pb2.Ack.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -470,5 +520,22 @@ class SlaveService(object):
         return grpc.experimental.unary_unary(request, target, '/SlaveService/AcceptUpdates',
             spec__pb2.AcceptUpdatesRequest.SerializeToString,
             spec__pb2.ServerResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpdateMaster(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/SlaveService/UpdateMaster',
+            spec__pb2.NewMasterRequest.SerializeToString,
+            spec__pb2.Ack.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
