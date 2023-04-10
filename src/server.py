@@ -54,9 +54,10 @@ class User:
 
 class ClientService(spec_pb2_grpc.ClientAccountServicer):
 
-    def __init__(self, db_session):
+    def __init__(self, db_session,update_queue):
         super().__init__()
         self.db_session = db_session
+        self.update_queue = update_queue
         
     def CreateAccount(self, request, context):
 
@@ -76,6 +77,14 @@ class ClientService(spec_pb2_grpc.ClientAccountServicer):
             session.commit()
             status_code = StatusCode.SUCCESS
             status_message = "Account created successfully!!"
+            
+            # get added user
+            added_user = session.query(UserModel).filter_by(
+                username=request.username).first()
+            
+            update_info = create_update_info("add", added_user, 'users')
+            
+            self.update_queue.put(update_info)
 
         session.remove()
         return spec_pb2.ServerResponse(error_code=status_code, error_message=status_message)
@@ -137,7 +146,14 @@ class ClientService(spec_pb2_grpc.ClientAccountServicer):
 
                 status_code = StatusCode.SUCCESS
                 status_message = "Message sent successfully!!"
+                
+                # get added message
+                msg2 = session.query(MessageModel).filter_by(
+                    message_id=msg.message_id).first()
 
+
+                update_info = create_update_info("add", msg2, 'messages')
+                self.update_queue.put(update_info)
         # Remove any remaining session
         session.remove()
 
@@ -289,9 +305,9 @@ class ClientService(spec_pb2_grpc.ClientAccountServicer):
                     msg.from_ = message.sender.username
                     msg.message = message.content
                     msg.message_id = message.id
-                    print(message.time_stamp)
+                    # print(message.time_stamp)
                     timestamp_proto = Timestamp()
-                    print(timestamp_proto)
+                    # print(timestamp_proto)
                     timestamp_proto.FromDatetime(message.time_stamp)
                     msg.time_stamp.CopyFrom(timestamp_proto)
                     message.is_received = True
@@ -440,7 +456,8 @@ class MasterService(spec_pb2_grpc.MasterServiceServicer):
 
     def RegisterSlave(self, request, context):
         slave_id = request.slave_id
-        self.slaves.append(slave_id)
+        slae_address = request.slave_address
+        self.slaves.append((slave_id, slae_address))
         
         
         # Fetch and pickle the data from ORM objects
@@ -449,7 +466,7 @@ class MasterService(spec_pb2_grpc.MasterServiceServicer):
             data = fetch_all_data_from_orm(connection)
             pickled_data = pickle.dumps(data)
 
-        other_slaves = [slave for slave in self.slaves if slave != slave_id]
+        other_slaves = [f"{slave[0]}:{slave[1]}" for slave in self.slaves if slave[0] != slave_id]
 
         response = spec_pb2.RegisterSlaveResponse(
             error_code=0,
@@ -457,16 +474,23 @@ class MasterService(spec_pb2_grpc.MasterServiceServicer):
             pickled_db=pickled_data,
             other_slaves=other_slaves
         )
-        print("Slave {} registered {} resp {}".format(slave_id, request.slave_address, response))
+        # print("Slave {} registered {} resp {}".format(slave_id, request.slave_address, response))
 
         
         return response
 
+table_class_mapping = {
+    'users': UserModel,
+    'messages': MessageModel,
+    'deleted_messages': DeletedMessageModel
+}
+
 
 class SlaveService(spec_pb2_grpc.SlaveServiceServicer):
-    def __init__(self, db_session, master_addres):
+    def __init__(self, db_session, master_address):
         self.db_session = db_session
         self.master_address = master_address
+        # print("Slave service initialized")
 
     def AcceptUpdates(self, request, context):
         update_data = request.update_data
@@ -483,14 +507,36 @@ class SlaveService(spec_pb2_grpc.SlaveServiceServicer):
         session = scoped_session(self.db_session)
 
         data = pickle.loads(update_data)
-        action, obj = data
+        table, action, obj = data
+        print(action, obj)
+        from sqlalchemy import inspect
+        def object_as_dict(obj_):
+            return {c.key: getattr(obj_, c.key)
+                for c in inspect(obj_).mapper.column_attrs}
+        # Convert the original object to a dictionary
+        print('inspect', inspect(obj).mapper.column_attrs)
+        obj_dict = object_as_dict(obj)
+        print('obj_dict', obj_dict)
+
+        # Recreate the object from the data
+        new_obj = table_class_mapping[table]()
+        for key, value in obj_dict.items():
+            print(key, value)
+            setattr(new_obj, key, value)
+
+        
         if action == 'add':
-            session.add(obj)
+            session.add(new_obj)
         elif action == 'delete':
-            session.delete(obj)
+            session.delete(new_obj)
         elif action == 'update':
-            session.merge(obj)
+            session.merge(new_obj)
         session.commit()
+        
+        # print database to check if it is updated
+        # query all users
+        Users = session.query(UserModel).all()
+        print('after update', Users)
 
 
 def serve_slave_client(db_session, address, master_address):
@@ -502,20 +548,20 @@ def serve_slave_client(db_session, address, master_address):
     print("Server started, listening on ", address)
     return server
 
-def serve_master_client(db_session, address):
+def serve_master_client(db_session, address, update_queue):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     spec_pb2_grpc.add_ClientAccountServicer_to_server(
-        ClientService(db_session=db_session), server)
+        ClientService(db_session=db_session, update_queue=update_queue), server)
     server.add_insecure_port(address)
     server.start()
     print("Client server started, listening on " + address)
     return server
 
 # internal channel for master to communicate with slave
-def serve_master_slave(address, db_engine):
+def serve_master_slave(slaves, address, db_engine):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     spec_pb2_grpc.add_MasterServiceServicer_to_server(
-        MasterService([], db_engine=db_engine), server)
+        MasterService(slaves, db_engine=db_engine), server)
     # spec_pb2_grpc.add_SlaveServiceServicer_to_server(
     #     SlaveService([]), server)
     server.add_insecure_port(address)
@@ -526,13 +572,18 @@ def serve_master_slave(address, db_engine):
 def server_slave_master(db_session, master_address, address):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     spec_pb2_grpc.add_SlaveServiceServicer_to_server(
-        SlaveService(db_session=db_session, master_addres=master_address), server)
+        SlaveService(db_session=db_session, master_address=master_address), server)
     
     server.add_insecure_port(address)
     server.start()
-    print("Master server started, listening on " + address)
+    print("Slaver server started, listening on " + address)
     return server
 
+
+def create_update_info(update_type, obj, table_name):
+    res = pickle.dumps((table_name, update_type, obj))
+    print('res', res)
+    return res
 def get_update_data(update_queue):
     try:
         data = update_queue.get(block=False)
@@ -541,15 +592,17 @@ def get_update_data(update_queue):
         return None
 
 
-def update_slaves(slaves, update_queue):
+def update_slaves(slave_addresses, update_queue):
     while True:
         # Fetch the update data here
         update_data = get_update_data(update_queue)
+        print("inside update slaves", update_data, slaves)
 
         if update_data is not None:
             # Iterate through each slave and send updates
-            for slave_address in slaves:
+            for _,slave_address in slave_addresses:
                 try:
+                    print(slave_address)
                     with grpc.insecure_channel(slave_address) as channel:
                         stub = spec_pb2_grpc.SlaveServiceStub(channel)
                         accept_updates_request = spec_pb2.AcceptUpdatesRequest(
@@ -595,11 +648,12 @@ if __name__ == '__main__':
         database_url = f'sqlite:///chat_{server_id}.db'
         database_engine = init_db(database_url)
         
+        # slave_id, slave_address
         slaves = []
         update_queue = queue.Queue()
         # start internal server for master
         # slave communication
-        master_server = serve_master_slave(address=internal_address, 
+        master_server = serve_master_slave(slaves=slaves, address=internal_address, 
                                            db_engine=database_engine)
 
         # Start a separate thread to send updates to slaves
@@ -609,7 +663,8 @@ if __name__ == '__main__':
 
         SessionFactory = get_session_factory(database_engine)
         logging.basicConfig()
-        clinet_server = serve_master_client(db_session=SessionFactory, address=client_address)
+        clinet_server = serve_master_client(db_session=SessionFactory, address=client_address, 
+                                            update_queue=update_queue)
 
         master_server.wait_for_termination()
         clinet_server.wait_for_termination()
@@ -622,7 +677,7 @@ if __name__ == '__main__':
         logging.basicConfig()
         
         # start internal server for slave
-        server_slave_master(db_session=SessionFactory, master_address=master_address, address=internal_address)
+        slave_server = server_slave_master(db_session=SessionFactory, master_address=master_address, address=internal_address)
         
         # send message to the masters registe method
         with grpc.insecure_channel(master_address) as channel:
@@ -630,12 +685,47 @@ if __name__ == '__main__':
             register_slave_request = spec_pb2.RegisterSlaveRequest(
                 slave_id=server_id, slave_address=internal_address)
             response = stub.RegisterSlave(register_slave_request)
-            print('slave registered: ', response)
+            master_db = pickle.loads(response.pickled_db)
+            
+            
             # update database with the master data
+            session = scoped_session(SessionFactory)
+            try:
+                for table_name, records in master_db.items():
+                    for record in records:
+                        # print("record", record, type(record), record.username)
+                        
+                        from sqlalchemy import inspect
+                        def object_as_dict(obj):
+                            return {c.key: getattr(obj, c.key)
+                                for c in inspect(obj).mapper.column_attrs}
+                        new_record = table_class_mapping[table_name](
+                            **object_as_dict(record)
+                        )
+                        session.add(new_record)
+
+                # Commit the transaction
+                session.commit()
+            except Exception as e:
+                print("Error occurred:", e)
+                session.rollback()
+            finally:
+                session.remove()  # Replace session.close() with session.remove()
+
+            # print("Slave database updated with master data.")
+
+            # check database by printing all users
+            # session = scoped_session(SessionFactory)
+            # users = session.query(UserModel).all()  # Make sure UserModel is the correct class
+            # print(users)
+            # session.remove()
+            
+
         
         
         clinet_server = serve_slave_client(db_session=SessionFactory, address=client_address, master_address=master_address)
         clinet_server.wait_for_termination()
+        slave_server.wait_for_termination()
 
         
         

@@ -132,5 +132,6 @@ message UpdateSlavesRequest {
 
 // Request message for accepting updates from the master
 message AcceptUpdatesRequest {
-  bytes update_data = 1;
+  String table_name = 1;
+  bytes update_data = 2;
 }
