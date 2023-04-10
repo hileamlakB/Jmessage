@@ -20,6 +20,7 @@ class StatusCode():
     RECEIVER_DOESNT_EXIST = 15
     MULTIPLE_USERS_ON_SAME_SOCKET = 16
     NO_MESSAGES = 17
+    NOT_MASTER = 18
 
 
 class StatusMessages:
@@ -41,7 +42,8 @@ class StatusMessages:
         StatusCode.USER_NOT_LOGGED_IN: "USER NOT LOGGED IN",
         StatusCode.RECEIVER_DOESNT_EXIST: "RECEIVER DOESN'T EXIST",
         StatusCode.MULTIPLE_USERS_ON_SAME_SOCKET: "ONLY ONE USER PER SOCKET ALLOWED",
-        StatusCode.NO_MESSAGES: "NO MESSAGES"
+        StatusCode.NO_MESSAGES: "NO MESSAGES",
+        StatusCode.NOT_MASTER: "NOT MASTER: CONNECT TO MASTER SERVER"
     }
 
     @classmethod

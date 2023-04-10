@@ -101,12 +101,20 @@ service MasterService {
   // Define an RPC for registering a slave
   rpc RegisterSlave(RegisterSlaveRequest) returns (RegisterSlaveResponse);
 
-  // Define an RPC for handling heartbeat checks
-  rpc HeartbeatCheck(HeartbeatRequest) returns (HeartbeatResponse);
+  // Define an RPC for sending updates to all slaves
+  // rpc UpdateSlaves(UpdateSlavesRequest) returns (ServerResponse);
 }
 
+// Define a gRPC service for slave server communication
+service SlaveService {
+  // Define an RPC for accepting updates from the master
+  rpc AcceptUpdates(AcceptUpdatesRequest) returns (ServerResponse);
+}
+
+// Request message for registering a slave
 message RegisterSlaveRequest {
   string slave_id = 1;
+  string slave_address = 2;
 }
 
 // Response message for registering a slave
@@ -114,21 +122,15 @@ message RegisterSlaveResponse {
   int32 error_code = 1;
   string error_message = 2;
   bytes pickled_db = 3;
+  repeated string other_slaves = 4;
 }
 
-// Request message for updating a slave with new data
-message UpdateSlaveRequest {
-  string slave_id = 1;
-  bytes update_data = 2;
+// Request message for sending updates to all slaves
+message UpdateSlavesRequest {
+  bytes update_data = 1;
 }
 
-// Request message for handling heartbeat checks
-message HeartbeatRequest {
-  string slave_id = 1;
-}
-
-// Response message for heartbeat checks
-message HeartbeatResponse {
-  int32 error_code = 1;
-  string error_message = 2;
+// Request message for accepting updates from the master
+message AcceptUpdatesRequest {
+  bytes update_data = 1;
 }

@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nspec.proto\x1a\x1fgoogle/protobuf/timestamp.proto\":\n\x14\x43reateAccountRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\"O\n\x0eServerResponse\x12\x12\n\nerror_code\x18\x01 \x01(\x05\x12\x15\n\rerror_message\x18\x02 \x01(\t\x12\x12\n\nsession_id\x18\x03 \x01(\t\"M\n\"AcknowledgeReceivedMessagesRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t\x12\x13\n\x0bmessage_ids\x18\x02 \x03(\x05\"2\n\x0cLoginRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\">\n\x0bSendRequest\x12\n\n\x02to\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x12\n\nsession_id\x18\x03 \x01(\t\"$\n\x0eReceiveRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t\"3\n\x0b\x43hatRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t\x12\x10\n\x08username\x18\x02 \x01(\t\"*\n\x14\x44\x65leteAccountRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t\"m\n\x07Message\x12\r\n\x05\x66rom_\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x12\n\nmessage_id\x18\x03 \x01(\x05\x12.\n\ntime_stamp\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"P\n\x08Messages\x12\x12\n\nerror_code\x18\x01 \x01(\x05\x12\x15\n\rerror_message\x18\x02 \x01(\t\x12\x19\n\x07message\x18\x03 \x03(\x0b\x32\x08.Message\"\x07\n\x05\x45mpty\"(\n\x04User\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\"\x1c\n\x05Users\x12\x13\n\x04user\x18\x01 \x03(\x0b\x32\x05.User\"(\n\x14RegisterSlaveRequest\x12\x10\n\x08slave_id\x18\x01 \x01(\t\"V\n\x15RegisterSlaveResponse\x12\x12\n\nerror_code\x18\x01 \x01(\x05\x12\x15\n\rerror_message\x18\x02 \x01(\t\x12\x12\n\npickled_db\x18\x03 \x01(\x0c\";\n\x12UpdateSlaveRequest\x12\x10\n\x08slave_id\x18\x01 \x01(\t\x12\x13\n\x0bupdate_data\x18\x02 \x01(\x0c\"$\n\x10HeartbeatRequest\x12\x10\n\x08slave_id\x18\x01 \x01(\t\">\n\x11HeartbeatResponse\x12\x12\n\nerror_code\x18\x01 \x01(\x05\x12\x15\n\rerror_message\x18\x02 \x01(\t2\xc4\x03\n\rClientAccount\x12\x37\n\rCreateAccount\x12\x15.CreateAccountRequest\x1a\x0f.ServerResponse\x12\x1b\n\tListUsers\x12\x06.Empty\x1a\x06.Users\x12\'\n\x05Login\x12\r.LoginRequest\x1a\x0f.ServerResponse\x12%\n\x04Send\x12\x0c.SendRequest\x1a\x0f.ServerResponse\x12)\n\x0bGetMessages\x12\x0f.ReceiveRequest\x1a\t.Messages\x12\"\n\x07GetChat\x12\x0c.ChatRequest\x1a\t.Messages\x12S\n\x1b\x41\x63knowledgeReceivedMessages\x12#.AcknowledgeReceivedMessagesRequest\x1a\x0f.ServerResponse\x12\x37\n\rDeleteAccount\x12\x15.DeleteAccountRequest\x1a\x0f.ServerResponse\x12\x30\n\x06Logout\x12\x15.DeleteAccountRequest\x1a\x0f.ServerResponse2\xc2\x01\n\x12MasterSlaveService\x12>\n\rRegisterSlave\x12\x15.RegisterSlaveRequest\x1a\x16.RegisterSlaveResponse\x12\x33\n\x0bUpdateSlave\x12\x13.UpdateSlaveRequest\x1a\x0f.ServerResponse\x12\x37\n\x0eHeartbeatCheck\x12\x11.HeartbeatRequest\x1a\x12.HeartbeatResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nspec.proto\x1a\x1fgoogle/protobuf/timestamp.proto\":\n\x14\x43reateAccountRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\"O\n\x0eServerResponse\x12\x12\n\nerror_code\x18\x01 \x01(\x05\x12\x15\n\rerror_message\x18\x02 \x01(\t\x12\x12\n\nsession_id\x18\x03 \x01(\t\"M\n\"AcknowledgeReceivedMessagesRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t\x12\x13\n\x0bmessage_ids\x18\x02 \x03(\x05\"2\n\x0cLoginRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\">\n\x0bSendRequest\x12\n\n\x02to\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x12\n\nsession_id\x18\x03 \x01(\t\"$\n\x0eReceiveRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t\"3\n\x0b\x43hatRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t\x12\x10\n\x08username\x18\x02 \x01(\t\"*\n\x14\x44\x65leteAccountRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t\"m\n\x07Message\x12\r\n\x05\x66rom_\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x12\n\nmessage_id\x18\x03 \x01(\x05\x12.\n\ntime_stamp\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"P\n\x08Messages\x12\x12\n\nerror_code\x18\x01 \x01(\x05\x12\x15\n\rerror_message\x18\x02 \x01(\t\x12\x19\n\x07message\x18\x03 \x03(\x0b\x32\x08.Message\"\x07\n\x05\x45mpty\"(\n\x04User\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\"\x1c\n\x05Users\x12\x13\n\x04user\x18\x01 \x03(\x0b\x32\x05.User\"?\n\x14RegisterSlaveRequest\x12\x10\n\x08slave_id\x18\x01 \x01(\t\x12\x15\n\rslave_address\x18\x02 \x01(\t\"l\n\x15RegisterSlaveResponse\x12\x12\n\nerror_code\x18\x01 \x01(\x05\x12\x15\n\rerror_message\x18\x02 \x01(\t\x12\x12\n\npickled_db\x18\x03 \x01(\x0c\x12\x14\n\x0cother_slaves\x18\x04 \x03(\t\"*\n\x13UpdateSlavesRequest\x12\x13\n\x0bupdate_data\x18\x01 \x01(\x0c\"+\n\x14\x41\x63\x63\x65ptUpdatesRequest\x12\x13\n\x0bupdate_data\x18\x01 \x01(\x0c\x32\xc4\x03\n\rClientAccount\x12\x37\n\rCreateAccount\x12\x15.CreateAccountRequest\x1a\x0f.ServerResponse\x12\x1b\n\tListUsers\x12\x06.Empty\x1a\x06.Users\x12\'\n\x05Login\x12\r.LoginRequest\x1a\x0f.ServerResponse\x12%\n\x04Send\x12\x0c.SendRequest\x1a\x0f.ServerResponse\x12)\n\x0bGetMessages\x12\x0f.ReceiveRequest\x1a\t.Messages\x12\"\n\x07GetChat\x12\x0c.ChatRequest\x1a\t.Messages\x12S\n\x1b\x41\x63knowledgeReceivedMessages\x12#.AcknowledgeReceivedMessagesRequest\x1a\x0f.ServerResponse\x12\x37\n\rDeleteAccount\x12\x15.DeleteAccountRequest\x1a\x0f.ServerResponse\x12\x30\n\x06Logout\x12\x15.DeleteAccountRequest\x1a\x0f.ServerResponse2O\n\rMasterService\x12>\n\rRegisterSlave\x12\x15.RegisterSlaveRequest\x1a\x16.RegisterSlaveResponse2G\n\x0cSlaveService\x12\x37\n\rAcceptUpdates\x12\x15.AcceptUpdatesRequest\x1a\x0f.ServerResponseb\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'spec_pb2', globals())
@@ -48,17 +48,17 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _USERS._serialized_start=762
   _USERS._serialized_end=790
   _REGISTERSLAVEREQUEST._serialized_start=792
-  _REGISTERSLAVEREQUEST._serialized_end=832
-  _REGISTERSLAVERESPONSE._serialized_start=834
-  _REGISTERSLAVERESPONSE._serialized_end=920
-  _UPDATESLAVEREQUEST._serialized_start=922
-  _UPDATESLAVEREQUEST._serialized_end=981
-  _HEARTBEATREQUEST._serialized_start=983
-  _HEARTBEATREQUEST._serialized_end=1019
-  _HEARTBEATRESPONSE._serialized_start=1021
-  _HEARTBEATRESPONSE._serialized_end=1083
-  _CLIENTACCOUNT._serialized_start=1086
-  _CLIENTACCOUNT._serialized_end=1538
-  _MASTERSLAVESERVICE._serialized_start=1541
-  _MASTERSLAVESERVICE._serialized_end=1735
+  _REGISTERSLAVEREQUEST._serialized_end=855
+  _REGISTERSLAVERESPONSE._serialized_start=857
+  _REGISTERSLAVERESPONSE._serialized_end=965
+  _UPDATESLAVESREQUEST._serialized_start=967
+  _UPDATESLAVESREQUEST._serialized_end=1009
+  _ACCEPTUPDATESREQUEST._serialized_start=1011
+  _ACCEPTUPDATESREQUEST._serialized_end=1054
+  _CLIENTACCOUNT._serialized_start=1057
+  _CLIENTACCOUNT._serialized_end=1509
+  _MASTERSERVICE._serialized_start=1511
+  _MASTERSERVICE._serialized_end=1590
+  _SLAVESERVICE._serialized_start=1592
+  _SLAVESERVICE._serialized_end=1663
 # @@protoc_insertion_point(module_scope)

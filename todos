@@ -1,2 +1,3 @@
 Implement notification bar
 implement update message once choosing a friend
+change the update slave to use a list of connection instead of creatin one each time

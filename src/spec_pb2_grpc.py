@@ -344,8 +344,9 @@ class ClientAccount(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
 
-class MasterSlaveServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+class MasterServiceStub(object):
+    """Define a gRPC service for master server communication
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -354,24 +355,15 @@ class MasterSlaveServiceStub(object):
             channel: A grpc.Channel.
         """
         self.RegisterSlave = channel.unary_unary(
-                '/MasterSlaveService/RegisterSlave',
+                '/MasterService/RegisterSlave',
                 request_serializer=spec__pb2.RegisterSlaveRequest.SerializeToString,
                 response_deserializer=spec__pb2.RegisterSlaveResponse.FromString,
                 )
-        self.UpdateSlave = channel.unary_unary(
-                '/MasterSlaveService/UpdateSlave',
-                request_serializer=spec__pb2.UpdateSlaveRequest.SerializeToString,
-                response_deserializer=spec__pb2.ServerResponse.FromString,
-                )
-        self.HeartbeatCheck = channel.unary_unary(
-                '/MasterSlaveService/HeartbeatCheck',
-                request_serializer=spec__pb2.HeartbeatRequest.SerializeToString,
-                response_deserializer=spec__pb2.HeartbeatResponse.FromString,
-                )
 
 
-class MasterSlaveServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+class MasterServiceServicer(object):
+    """Define a gRPC service for master server communication
+    """
 
     def RegisterSlave(self, request, context):
         """Define an RPC for registering a slave
@@ -380,47 +372,24 @@ class MasterSlaveServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def UpdateSlave(self, request, context):
-        """Define an RPC for updating a slave with new data
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
 
-    def HeartbeatCheck(self, request, context):
-        """Define an RPC for handling heartbeat checks
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-
-def add_MasterSlaveServiceServicer_to_server(servicer, server):
+def add_MasterServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'RegisterSlave': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterSlave,
                     request_deserializer=spec__pb2.RegisterSlaveRequest.FromString,
                     response_serializer=spec__pb2.RegisterSlaveResponse.SerializeToString,
             ),
-            'UpdateSlave': grpc.unary_unary_rpc_method_handler(
-                    servicer.UpdateSlave,
-                    request_deserializer=spec__pb2.UpdateSlaveRequest.FromString,
-                    response_serializer=spec__pb2.ServerResponse.SerializeToString,
-            ),
-            'HeartbeatCheck': grpc.unary_unary_rpc_method_handler(
-                    servicer.HeartbeatCheck,
-                    request_deserializer=spec__pb2.HeartbeatRequest.FromString,
-                    response_serializer=spec__pb2.HeartbeatResponse.SerializeToString,
-            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'MasterSlaveService', rpc_method_handlers)
+            'MasterService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class MasterSlaveService(object):
-    """Missing associated documentation comment in .proto file."""
+class MasterService(object):
+    """Define a gRPC service for master server communication
+    """
 
     @staticmethod
     def RegisterSlave(request,
@@ -433,31 +402,62 @@ class MasterSlaveService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/MasterSlaveService/RegisterSlave',
+        return grpc.experimental.unary_unary(request, target, '/MasterService/RegisterSlave',
             spec__pb2.RegisterSlaveRequest.SerializeToString,
             spec__pb2.RegisterSlaveResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
-    @staticmethod
-    def UpdateSlave(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/MasterSlaveService/UpdateSlave',
-            spec__pb2.UpdateSlaveRequest.SerializeToString,
-            spec__pb2.ServerResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+class SlaveServiceStub(object):
+    """Define a gRPC service for slave server communication
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.AcceptUpdates = channel.unary_unary(
+                '/SlaveService/AcceptUpdates',
+                request_serializer=spec__pb2.AcceptUpdatesRequest.SerializeToString,
+                response_deserializer=spec__pb2.ServerResponse.FromString,
+                )
+
+
+class SlaveServiceServicer(object):
+    """Define a gRPC service for slave server communication
+    """
+
+    def AcceptUpdates(self, request, context):
+        """Define an RPC for accepting updates from the master
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_SlaveServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'AcceptUpdates': grpc.unary_unary_rpc_method_handler(
+                    servicer.AcceptUpdates,
+                    request_deserializer=spec__pb2.AcceptUpdatesRequest.FromString,
+                    response_serializer=spec__pb2.ServerResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'SlaveService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class SlaveService(object):
+    """Define a gRPC service for slave server communication
+    """
 
     @staticmethod
-    def HeartbeatCheck(request,
+    def AcceptUpdates(request,
             target,
             options=(),
             channel_credentials=None,
@@ -467,8 +467,8 @@ class MasterSlaveService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/MasterSlaveService/HeartbeatCheck',
-            spec__pb2.HeartbeatRequest.SerializeToString,
-            spec__pb2.HeartbeatResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/SlaveService/AcceptUpdates',
+            spec__pb2.AcceptUpdatesRequest.SerializeToString,
+            spec__pb2.ServerResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
