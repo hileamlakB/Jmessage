@@ -110,11 +110,16 @@ service SlaveService {
   // Define an RPC for accepting updates from the master
   rpc AcceptUpdates(AcceptUpdatesRequest) returns (ServerResponse);
   rpc UpdateMaster(NewMasterRequest) returns (Ack);
+  rpc UpdateSlaves(UpdateSlavesRequest) returns (Ack);
 }
 
 message NewMasterRequest {
   string new_master_address = 1;
   string new_master_id = 2;
+}
+
+message UpdateSlavesRequest {
+  bytes update_data = 1;
 }
 
 // Request message for registering a slave
@@ -131,10 +136,6 @@ message RegisterSlaveResponse {
   repeated string other_slaves = 4;
 }
 
-// Request message for sending updates to all slaves
-message UpdateSlavesRequest {
-  bytes update_data = 1;
-}
 
 // Request message for accepting updates from the master
 message AcceptUpdatesRequest {

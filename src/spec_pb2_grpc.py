@@ -458,9 +458,19 @@ class SlaveServiceStub(object):
                 request_serializer=spec__pb2.AcceptUpdatesRequest.SerializeToString,
                 response_deserializer=spec__pb2.ServerResponse.FromString,
                 )
+        self.SIMPLE = channel.unary_unary(
+                '/SlaveService/SIMPLE',
+                request_serializer=spec__pb2.Empty.SerializeToString,
+                response_deserializer=spec__pb2.Ack.FromString,
+                )
         self.UpdateMaster = channel.unary_unary(
                 '/SlaveService/UpdateMaster',
                 request_serializer=spec__pb2.NewMasterRequest.SerializeToString,
+                response_deserializer=spec__pb2.Ack.FromString,
+                )
+        self.UpdateSlaves = channel.unary_unary(
+                '/SlaveService/UpdateSlaves',
+                request_serializer=spec__pb2.UpdateSlavesRequest.SerializeToString,
                 response_deserializer=spec__pb2.Ack.FromString,
                 )
 
@@ -476,7 +486,19 @@ class SlaveServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SIMPLE(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def UpdateMaster(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateSlaves(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -490,9 +512,19 @@ def add_SlaveServiceServicer_to_server(servicer, server):
                     request_deserializer=spec__pb2.AcceptUpdatesRequest.FromString,
                     response_serializer=spec__pb2.ServerResponse.SerializeToString,
             ),
+            'SIMPLE': grpc.unary_unary_rpc_method_handler(
+                    servicer.SIMPLE,
+                    request_deserializer=spec__pb2.Empty.FromString,
+                    response_serializer=spec__pb2.Ack.SerializeToString,
+            ),
             'UpdateMaster': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateMaster,
                     request_deserializer=spec__pb2.NewMasterRequest.FromString,
+                    response_serializer=spec__pb2.Ack.SerializeToString,
+            ),
+            'UpdateSlaves': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateSlaves,
+                    request_deserializer=spec__pb2.UpdateSlavesRequest.FromString,
                     response_serializer=spec__pb2.Ack.SerializeToString,
             ),
     }
@@ -524,6 +556,23 @@ class SlaveService(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def SIMPLE(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/SlaveService/SIMPLE',
+            spec__pb2.Empty.SerializeToString,
+            spec__pb2.Ack.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def UpdateMaster(request,
             target,
             options=(),
@@ -536,6 +585,23 @@ class SlaveService(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/SlaveService/UpdateMaster',
             spec__pb2.NewMasterRequest.SerializeToString,
+            spec__pb2.Ack.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpdateSlaves(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/SlaveService/UpdateSlaves',
+            spec__pb2.UpdateSlavesRequest.SerializeToString,
             spec__pb2.Ack.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
