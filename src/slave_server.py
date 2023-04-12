@@ -150,63 +150,6 @@ def assign_new_master(state, master_address, master_id):
 
 class ClientServiceSlave(spec_pb2_grpc.ClientAccountServicer):
     pass
-    # def CreateAccount(self, request, context):
-    #     status_code = StatusCode.NOT_MASTER
-    #     status_message = StatusMessages.get_error_message(status_code)
-    #     return spec_pb2.ServerResponse(error_code=status_code, error_message=status_message)
-
-    # def ListUsers(self, request, context):
-    #     users = spec_pb2.Users()
-    #     return users
-
-    # def Login(self, request, context):
-    #     """Define an RPC for logging in to an account
-    #     """
-    #     status_code = StatusCode.NOT_MASTER
-    #     status_message = StatusMessages.get_error_message(status_code)
-    #     return spec_pb2.ServerResponse(error_code=status_code, error_message=status_message)
-
-    # def Send(self, request, context):
-    #     """Define an RPC for sending a message to a recipient
-    #     """
-    #     status_code = StatusCode.NOT_MASTER
-    #     status_message = StatusMessages.get_error_message(status_code)
-    #     return spec_pb2.ServerResponse(error_code=status_code, error_message=status_message)
-
-    # def GetMessages(self, request, context):
-    #     """Define an RPC for receiving messages
-    #     rpc SubscribeMessage(ReceiveRequest) returns (stream Message);
-
-    #     Define an RPC for receiving messages
-    #     """
-    #     msgs = spec_pb2.Messages()
-    #     return msgs
-
-    # def GetChat(self, request, context):
-    #     """Missing associated documentation comment in .proto file."""
-    #     msgs = spec_pb2.Messages()
-    #     return msgs
-
-    # def AcknowledgeReceivedMessages(self, request, context):
-    #     """Define an RPC for receiving messages
-    #     """
-    #     status_code = StatusCode.NOT_MASTER
-    #     status_message = StatusMessages.get_error_message(status_code)
-    #     return spec_pb2.ServerResponse(error_code=status_code, error_message=status_message)
-
-    # def DeleteAccount(self, request, context):
-    #     """Define an RPC for deleting an account
-    #     """
-    #     status_code = StatusCode.NOT_MASTER
-    #     status_message = StatusMessages.get_error_message(status_code)
-    #     return spec_pb2.ServerResponse(error_code=status_code, error_message=status_message)
-
-    # def Logout(self, request, context):
-    #     """Define an RPC for logging out of an account
-    #     """
-    #     status_code = StatusCode.NOT_MASTER
-    #     status_message = StatusMessages.get_error_message(status_code)
-    #     return spec_pb2.ServerResponse(error_code=status_code, error_message=status_message)
 
 
 def serve_slave_client(slave_state):

@@ -186,6 +186,19 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
         else:
             messagebox.showerror("Error", response.error_message)
 
+    def relogin(self):
+        messagebox.showerror(
+            "Error", "Server failed, connected to backup server. Please relogin")
+        self.logged_in_label.pack_forget()
+        self.logout_button.pack_forget()
+
+        self.username_label.pack(side="left")
+        self.username_entry.pack(side="left")
+        self.password_label.pack(side="left")
+        self.password_entry.pack(side="left")
+        self.login_button.pack(side="left")
+        self.signup_button.pack(side="left")
+
     def logout(self):
         response = JarvesClientBase.logout(self)
 

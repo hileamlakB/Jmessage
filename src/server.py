@@ -71,7 +71,8 @@ def upgrade_slave(old_state):
 
 
 def check_new_master(min_slave, slave_state):
-    with grpc.insecure_channel(min_slave[0]) as channel:
+
+    with grpc.insecure_channel(min_slave[1]) as channel:
         num_tries = 2
         stub = spec_pb2_grpc.MasterServiceStub(channel)
         success = False
@@ -103,6 +104,7 @@ def slave_heart_beat_checker(slave_state):
 
     while True:
         master_address = slave_state['master_address']
+        print("checkig ", master_address)
 
         # Check if the master is alive
         # If not start the election process

@@ -41,6 +41,9 @@ class JarvesClientBase:
     def exit_(self):
         pass
 
+    def relogin(self):
+        pass
+
     def connect(self):
         # breakpoint()
         with self.lock:
@@ -95,6 +98,8 @@ class JarvesClientBase:
             self.addresses.pop(0)
             print(self.addresses)
             return self.connect()
+        else:
+            self.relogin()
 
     @reconnect_on_error
     def list_users(self):
