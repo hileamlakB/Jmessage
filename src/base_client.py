@@ -3,6 +3,7 @@ import threading
 import time
 import spec_pb2_grpc
 import spec_pb2
+import functools
 
 
 class reconnect_on_error:
@@ -10,17 +11,20 @@ class reconnect_on_error:
         self.method = method
 
     def __get__(self, instance, owner):
-        def wrapped_method(*args, **kwargs):
-            try:
+        if instance is None:
+            return self
+        return functools.partial(self.__call__, instance)
+
+    def __call__(self, instance, *args, **kwargs):
+        try:
+            return self.method(instance, *args, **kwargs)
+        except grpc.RpcError as e:
+            if e.code() == grpc.StatusCode.UNAVAILABLE:
+                print("Server is unavailable. Trying to reconnect...")
+                instance.connect()
                 return self.method(instance, *args, **kwargs)
-            except grpc.RpcError as e:
-                if e.code() == grpc.StatusCode.UNAVAILABLE:
-                    print("Server is unavailable. Trying to reconnect...")
-                    instance.connect()
-                    return self.method(instance, *args, **kwargs)
-                else:
-                    raise
-        return wrapped_method
+            else:
+                print("Error:", e)
 
 
 class JarvesClientBase:
@@ -38,7 +42,7 @@ class JarvesClientBase:
         pass
 
     def connect(self):
-
+        # breakpoint()
         with self.lock:
             # Check the connection using a simple request like ListUsers
             try:
@@ -46,7 +50,7 @@ class JarvesClientBase:
                 if response:
                     print("Connection is active")
                     return
-            except (AttributeError, grpc.RpcError) as e:
+            except (Exception, grpc.RpcError) as e:
                 pass
 
             if len(self.addresses) == 0:
@@ -76,18 +80,21 @@ class JarvesClientBase:
 
                         tried.add(self.addresses[0])
                         self.addresses.append(self.addresses.pop(0))
+                        print("talking to a slave, moving to next address",
+                              self.addresses)
                     else:
                         print(
-                            f"Connection failed. Retrying in {self.retry_interval} seconds... Error: {e}")
+                            f"Connection failed. Retrying in {self.retry_interval} seconds... Error: {e.code()}")
                         retries += 1
                     time.sleep(self.retry_interval)
 
-            if not success:
-                print("Failed to establish connection after maximum retries.")
-                # if reachingout to the server multiple times doesn't get response
-                # delete this address as it is usless
-                self.addresses.pop(0)
-                return self.connect()
+        if not success:
+            print("Failed to establish connection after maximum retries.")
+            # if reachingout to the server multiple times doesn't get response
+            # delete this address as it is usless
+            self.addresses.pop(0)
+            print(self.addresses)
+            return self.connect()
 
     @reconnect_on_error
     def list_users(self):
@@ -120,4 +127,24 @@ class JarvesClientBase:
 
     @reconnect_on_error
     def delete_account(self):
-        response = self
+        response = self.stub.DeleteAccount(
+            spec_pb2.DeleteAccountRequest(session_id=self.user_session_id))
+        return response
+
+    @reconnect_on_error
+    def receive_messages(self):
+        msgs = self.stub.GetMessages(
+            spec_pb2.ReceiveRequest(session_id=self.user_session_id))
+        return msgs
+
+    @reconnect_on_error
+    def acknowledge_received_messages(self, message_ids):
+        ack_response = self.stub.AcknowledgeReceivedMessages(
+            spec_pb2.AcknowledgeRequest(session_id=self.user_session_id, message_ids=message_ids))
+        return ack_response
+
+    @reconnect_on_error
+    def get_chat(self, recipient):
+        msgs = self.stub.GetChat(
+            spec_pb2.ChatRequest(session_id=self.user_session_id, username=recipient))
+        return msgs
