@@ -21,13 +21,14 @@ import time
 import queue
 from slave_server import *
 
+
 class ClientService(spec_pb2_grpc.ClientAccountServicer):
 
-    def __init__(self, db_session,update_queue):
+    def __init__(self, db_session, update_queue):
         super().__init__()
         self.db_session = db_session
         self.update_queue = update_queue
-        
+
     def CreateAccount(self, request, context):
 
         session = scoped_session(self.db_session)
@@ -46,13 +47,14 @@ class ClientService(spec_pb2_grpc.ClientAccountServicer):
             session.commit()
             status_code = StatusCode.SUCCESS
             status_message = "Account created successfully!!"
-            
+
             # get added user
             added_user = session.query(UserModel).filter_by(
                 username=request.username).first()
-            
-            update_info = create_update_info("add", added_user, 'users')
-            
+
+            update_info = pickle.dumps(('users', 'add', added_user))
+            # create_update_info("add", added_user, 'users')
+
             self.update_queue.put(update_info)
 
         session.remove()
@@ -115,17 +117,21 @@ class ClientService(spec_pb2_grpc.ClientAccountServicer):
 
                 status_code = StatusCode.SUCCESS
                 status_message = "Message sent successfully!!"
-                
+                # breakpoint()
                 # get added message
                 msg2 = session.query(MessageModel).filter_by(
-                    message_id=msg.message_id).first()
+                    id=msg.id).first()
 
-
-                update_info = create_update_info("add", msg2, 'messages')
-                self.update_queue.put(update_info)
+                print("before updating slaves")
+                update_info = pickle.dumps(('messages', "add", msg2))
+                print(update_info)
+                try:
+                    self.update_queue.put(update_info)
+                except Exception as e:
+                    print(e)
         # Remove any remaining session
         session.remove()
-
+        print("responding with server response")
         return spec_pb2.ServerResponse(error_code=status_code, error_message=status_message)
 
     def ListUsers(self, request, context):
@@ -152,15 +158,16 @@ class ClientService(spec_pb2_grpc.ClientAccountServicer):
 
         session = scoped_session(self.db_session)
         user = session.query(UserModel).filter_by(
-            s50051ession_id=request.session_id).first()
+            session_id=request.session_id).first()
 
-        if user is None:
+        if not user:
             msgs.error_code = StatusCode.USER_NOT_LOGGED_IN
             msgs.error_message = StatusMessages.get_error_message(
                 msgs.error_code)
         else:
-            messages = session.query(MessageModel).filter_by(
-                receiver_id=user.id, is_received=False).all()
+
+            messages = session.query(MessageModel).filter(
+                and_(MessageModel.receiver_id == user.id, MessageModel.is_received == False)).all()
 
             if len(messages) == 0:
                 msgs.error_code = StatusCode.NO_MESSAGES
@@ -168,6 +175,7 @@ class ClientService(spec_pb2_grpc.ClientAccountServicer):
                     msgs.error_code)
             else:
                 for message in messages:
+                    print(message.is_received)
                     msg = msgs.message.add()
                     msg.from_ = message.sender.username
                     msg.message = message.content
@@ -279,7 +287,8 @@ class ClientService(spec_pb2_grpc.ClientAccountServicer):
                     # print(timestamp_proto)
                     timestamp_proto.FromDatetime(message.time_stamp)
                     msg.time_stamp.CopyFrom(timestamp_proto)
-                    message.is_received = True
+                    if (message.receiver_id == user.id):
+                        message.is_received = True
 
                 session.commit()
                 msgs.error_code = StatusCode.SUCCESS
@@ -359,26 +368,26 @@ class MasterService(spec_pb2_grpc.MasterServiceServicer):
         slave_address = request.slave_address
         if (slave_id, slave_address) not in self.states['slaves']:
             self.states['slaves'].append((slave_id, slave_address))
-        print(self.states)
-        
+        # print(self.states)
+
         # Fetch and pickle the data from ORM objects
         with self.db_engine.begin() as connection:
             # Implement this function to fetch data from ORM objects
             data = fetch_all_data_from_orm(connection)
             pickled_data = pickle.dumps(data)
 
-        
-        other_slaves = [f"{slave[0]}-{slave[1]}" for slave in self.states['slaves'] if slave[0] != slave_id]
-        print(other_slaves)
+        other_slaves = [
+            f"{slave[0]}-{slave[1]}" for slave in self.states['slaves'] if slave[0] != slave_id]
+        # print(other_slaves)
         # inform other slaves about this new slave
         for slave in other_slaves:
             saddress = slave.split("-")[1]
-            print(slave, saddress)
+            # print(slave, saddress)
             with grpc.insecure_channel(saddress) as channel:
                 stub = spec_pb2_grpc.SlaveServiceStub(channel)
-                print(channel, stub)
+                # print(channel, stub)
                 stub.UpdateSlaves(spec_pb2.UpdateSlavesRequest(
-                    update_data = pickle.dumps((slave_id, slave_address))
+                    update_data=pickle.dumps((slave_id, slave_address))
                 ))
 
         response = spec_pb2.RegisterSlaveResponse(
@@ -389,10 +398,14 @@ class MasterService(spec_pb2_grpc.MasterServiceServicer):
         )
         # print("Slave {} registered {} resp {}".format(slave_id, request.slave_address, response))
 
-        
         return response
+
     def HeartBeat(self, request, context):
         return spec_pb2.Ack(error_code=0, error_message="")
+
+    def CheckMaster(self, request, context):
+        return spec_pb2.Ack(error_code=0, error_message="")
+
 
 table_class_mapping = {
     'users': UserModel,
@@ -402,7 +415,8 @@ table_class_mapping = {
 
 
 def serve_master_client(master_state):
-    db_session, address, update_queue, client_address = master_state['db_session'], master_state['master_address'], master_state['update_queue'], master_state['client_address']
+    db_session, address, update_queue, client_address = master_state['db_session'], master_state[
+        'master_address'], master_state['update_queue'], master_state['client_address']
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     spec_pb2_grpc.add_ClientAccountServicer_to_server(
         ClientService(db_session=db_session, update_queue=update_queue), server)
@@ -412,9 +426,11 @@ def serve_master_client(master_state):
     return server
 
 # internal channel for master to communicate with slave
+
+
 def serve_master_slave(master_state):
     address, db_engine = master_state['master_address'], master_state['db_engine']
-    
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=20))
     spec_pb2_grpc.add_MasterServiceServicer_to_server(
         MasterService(master_state, db_engine=db_engine), server)
@@ -424,10 +440,6 @@ def serve_master_slave(master_state):
     return server
 
 
-def create_update_info(update_type, obj, table_name):
-    res = pickle.dumps((table_name, update_type, obj))
-    print('res', res)
-    return res
 def get_update_data(update_queue):
     try:
         data = update_queue.get(block=False)
@@ -437,19 +449,19 @@ def get_update_data(update_queue):
 
 
 def update_slaves(master_state):
-    
+
     while True:
         slave_addresses = master_state['slaves']
         update_queue = master_state['update_queue']
-        
+
         # Fetch the update data here
         update_data = get_update_data(update_queue)
 
         if update_data is not None:
             # Iterate through each slave and send updates
-            for _,slave_address in slave_addresses:
+            for _, slave_address in slave_addresses:
                 try:
-                    print(slave_address)
+                    # print(slave_address)
                     with grpc.insecure_channel(slave_address) as channel:
                         stub = spec_pb2_grpc.SlaveServiceStub(channel)
                         accept_updates_request = spec_pb2.AcceptUpdatesRequest(
@@ -458,4 +470,3 @@ def update_slaves(master_state):
                 except Exception as e:
                     print("Error while sending updates to slave: " + str(e))
         time.sleep(2)
-        

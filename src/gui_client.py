@@ -4,25 +4,40 @@ import time
 from tkinter import ttk, scrolledtext
 from base_client import JarvesClientBase
 import tkinter.messagebox as messagebox
+from ttkthemes import ThemedStyle
+import signal
 
 
 class JarvesClientGUI(tk.Tk, JarvesClientBase):
-    def __init__(self, host, port):
+    def __init__(self, addresses):
         tk.Tk.__init__(self)
-        JarvesClientBase.__init__(self, port)
+        JarvesClientBase.__init__(self, addresses)
 
         self.title("Jarves Chat")
-        self.geometry("800x600")
+        self.geometry("900x700")
 
         self.create_widgets()
 
         user_list_update_thread = threading.Thread(
-            target=self.update_user_list_periodically)
+            target=self.update_user_list)
         user_list_update_thread.daemon = True
         user_list_update_thread.start()
-        self.protocol("WM_DELETE_WINDOW", self.on_exit)
 
-    def on_exit(self):
+        chat_update_thread = threading.Thread(
+            target=self.update_chat)
+        chat_update_thread.daemon = True
+        chat_update_thread.start()
+
+        notification_update_thread = threading.Thread(
+            target=self.update_notification)
+        notification_update_thread.daemon = True
+        notification_update_thread.start()
+
+        self.protocol("WM_DELETE_WINDOW", self.exit_)
+
+        signal.signal(signal.SIGINT, self.exit_)
+
+    def exit_(self, *args, **kwargs):
         try:
             self.logout()
         except Exception as e:
@@ -30,6 +45,12 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
         self.destroy()
 
     def create_widgets(self):
+
+        style = ThemedStyle(self)
+        style.set_theme("adapta")
+
+        scrolledtext.ScrolledText.style = "TScrolledText"
+
         # Create frames
         top_frame = ttk.Frame(self)
         top_frame.pack(side=tk.TOP, fill=tk.X)
@@ -84,6 +105,16 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
         self.logout_button.pack(side=tk.LEFT, padx=5)
         self.logout_button.pack_forget()
 
+        # Create notification area inside chat_frame
+        self.notification_text = scrolledtext.ScrolledText(
+            chat_frame, wrap=tk.WORD, state='disabled', height=4)
+        self.notification_text.pack(
+            side=tk.TOP, padx=5, pady=(0, 2), fill=tk.X, expand=False)
+
+        # Add a separator line between notification_text and chat_text
+        separator = ttk.Separator(chat_frame, orient="horizontal")
+        separator.pack(side=tk.TOP, padx=5, pady=5, fill=tk.X)
+
         # Create chat display area
         self.chat_text = scrolledtext.ScrolledText(
             chat_frame, wrap=tk.WORD, state='disabled')
@@ -108,7 +139,7 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
 
         # Add this line to bind the callback function to the variable
         self.recipient_combobox.bind(
-            "<<ComboboxSelected>>", self.load_chat_history)
+            "<<ComboboxSelected>>", self.change_recipient)
 
         list_users_button = ttk.Button(
             recipient_frame, text="List Users", command=self.display_users)
@@ -116,6 +147,12 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
         clear_button = ttk.Button(
             chat_frame, text="Clear", command=self.clear_chat)
         clear_button.pack(side=tk.BOTTOM, pady=5)
+
+    def display_notification(self, notification_text):
+        self.notification_text.configure(state='normal')
+        self.notification_text.insert(tk.END, notification_text + "\n")
+        self.notification_text.configure(state='disabled')
+        self.notification_text.see(tk.END)
 
     def signup(self):
         username = self.username_entry.get()
@@ -172,12 +209,12 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
             self.recipient_combobox["values"] = tuple(
                 [user.username for user in users])
 
-            self.chat_text.config(state='normal')
-            self.chat_text.insert(tk.END, "List of users:\n")
+            self.notification_text.config(state='normal')
+            self.notification_text.insert(tk.END, "List of users:\n")
             for user in users:
-                self.chat_text.insert(
+                self.notification_text.insert(
                     tk.END, f"{user.username} [{user.status}]\n")
-            self.chat_text.config(state='disabled')
+            self.notification_text.config(state='disabled')
 
     def send_message(self):
         to = self.recipient_combobox.get()
@@ -185,6 +222,7 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
 
         if to and message:
             response = JarvesClientBase.send_message(self, to, message)
+            print(to, message, response)
             if response.error_code == 0:
                 self.message_entry.delete(0, tk.END)
                 # self.display_message(f"You: {message}")
@@ -208,10 +246,13 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
         self.chat_text.delete(1.0, tk.END)
         self.chat_text.config(state='disabled')
 
-    def load_chat_history(self, event):
-        recipient = event.widget.get()
+    def change_recipient(self, event):
+        self.clear_chat()
+        self.load_chat_history(event.widget.get())
 
-        print("inside load_chat_history: ", recipient)
+    def load_chat_history(self, recipient):
+
+        # print("inside load_chat_history: ", recipient)
 
         if recipient:
             response = JarvesClientBase.get_chat(self, recipient)
@@ -222,36 +263,37 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
                 self.chat_text.delete(1.0, tk.END)
                 for message in response.message:
                     self.chat_text.insert(
-                        tk.END, f"{message.from_}: {message.message}")
+                        tk.END, f"{message.from_}: {message.message}\n")
                 self.chat_text.config(state='disabled')
             else:
                 print(response.error_message)
 
-    def receive_thread(self):
+    def update_notification(self):
+
         while True:
+
             msgs = JarvesClientBase.receive_messages(self)
+            print('messages: ', msgs)
+            if msgs:
+                if msgs.error_code == 0:
+                    for message in msgs.message:
+                        # here building a cache of messages for each user
+                        # might be a good idea isntead of asking the server each time
+                        # for update in the update method
+                        self.display_notification(
+                            f"Message from:{message.from_}")
 
-            if msgs.error_code != 0:
-                time.sleep(1)
-                continue
-            else:
-                for message in msgs.message:
-                    self.display_message(f"{message.from_}: {message.message}")
+            time.sleep(2)
 
-                # Send acknowledgment for the received messages
-                message_ids = [msg.id for msg in msgs.message]
-                ack_response = JarvesClientBase.acknowledge_received_messages(
-                    self, message_ids)
+    def update_chat(self):
+        while True:
+            # here it might be a good idea
+            # to only load a certain amount of messages
+            # and have that built in capability on the server side as well
+            self.load_chat_history(self.recipient_combobox.get())
+            time.sleep(1)
 
-                if ack_response.error_code != 0:
-                    print(
-                        f"Error acknowledging messages: {ack_response.error_message}")
-                    return
-
-                if msgs.error_code != 0:
-                    return
-
-    def update_user_list_periodically(self, interval=10):
+    def update_user_list(self, interval=2):
         while True:
             users = self.list_users()
 
@@ -260,10 +302,23 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
             time.sleep(interval)
 
     @classmethod
-    def run(cls, host, port):
-        app = cls(host, port)
+    def run(cls, addresses):
+        app = cls(addresses)
         app.mainloop()
 
 
 if __name__ == "__main__":
-    JarvesClientGUI.run("localhost", 2627)
+    import argparse
+
+    # take in a list of available address with the first one being
+    # the master
+    parser = argparse.ArgumentParser(
+        description="Start a chat client.")
+    parser.add_argument('-a', '--addresses', nargs='+',
+                        help='<Required> give list of available servers', required=True)
+
+    args = parser.parse_args()
+    addresses = args.addresses
+    print(addresses)
+
+    JarvesClientGUI.run(addresses)

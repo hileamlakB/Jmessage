@@ -103,6 +103,7 @@ service MasterService {
 
   // when a slave checks in, master send a response if it doesn't leader elction will be triggered
   rpc HeartBeat(Empty) returns (Ack);
+  rpc CheckMaster(Empty) returns (Ack);
 }
 
 // Define a gRPC service for slave server communication

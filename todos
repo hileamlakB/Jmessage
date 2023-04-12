@@ -1,3 +1,4 @@
-Implement notification bar
-implement update message once choosing a friend
-change the update slave to use a list of connection instead of creatin one each time
+Implement notification bar [DOne]
+implement update message once choosing a friend [DOne]
+Take a list of servers at the start and connect to the other when the master 
+fails, 
