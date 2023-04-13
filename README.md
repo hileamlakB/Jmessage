@@ -149,7 +149,7 @@ The source code is organized as follows:
 │ └── test_server.py
 ```
 
-`<details><summary>src/</summary>`
+<details><summary>src/</summary>
 
 Clients
 
@@ -174,9 +174,9 @@ Grpc setup
 - `spec_pb2.pyi`: Generated stub file for spec_pb2.py
 - `spec.proto`: Protocol buffer definition file for the application's gRPC services and message types.
 
-`</details>`
+</details>
 
-`<details><summary>tests/</summary>`
+<details><summary>tests/</summary>
 
     `test_base_client.py`: Unit tests for the base_client.py file.
 
@@ -184,7 +184,7 @@ Grpc setup
 - `test_database.py`: Unit tests for the models.py file.
 - `test_server.py`: Unit tests for the master_server.py and slave_server.py files.
 
-`</details>`
+</details>
 
 ## Installation
 
