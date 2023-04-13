@@ -2,8 +2,8 @@ Implement notification bar [DOne]
 implement update message once choosing a friend [DOne]
 Take a list of servers at the start and connect to the other when the master 
 fails [done]
-make reame nicer
-add more info about or, replication, and election policy
-add more diagrams
+make reame nicer [done]
+add more info about or, replication, and election policy [done]
+add more diagrams [done]
 fix test
 rigrious testing
