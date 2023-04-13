@@ -1,13 +1,134 @@
-# N-Failstop Fault Tolerant Chat Application Documentation
+# Jmessage: N-Failstop Fault Tolerant Chat App
 
 ## Overview
 
 This chat application is designed to be resilient against up to N failstop faults. It uses a master-slave architecture to ensure fault tolerance and relies on the gRPC protocol for communication between its components. This documentation provides a comprehensive overview of the application's structure and functionality, including file organization and protocol buffer definitions.
 
+## How does it work?
+
+This project has the following architecture.
+
+![architecture desig](docs/architecture.png)
+
+All the slave servers follow the same structure as the first slave server. The server communicate amongs themselves accordin to the following protocol. The protocl descirption include initial setup instructions.
+
+1. Create a server with a unique ID and a database. If not specified otherwise, it assumes the role of a master.
+2. Additional slave servers could then be added with more unique ids. When creating another server, provide the master's address. This new server will act as a slave and establish communication with the master. When establishing a communication, here is what happens
+
+   1. Slave asks to be registered in the system
+   2. Master takes this request, notifies everyone in the system about the addition of the slave and respond with the latest version of the database
+   3. The slave creates its own version of the local database based on the response
+   4. The master will then send updates as necessary when there are changes to its database. On subsequent changes only the updates are send instead of the whole database
+      1. Note: During initial database replication, the slave probably should block updating its database so that updates will not try to change the database before replication is complete
+      2. Subsequent updates use a publish-subscribe pattern for asynchronous communication.
+      3. Unique Id generation could potentially be automate by the server
+      4. Adding more slaves might slow down the system as there will be more communications in place
+
+3. The servers process messages from clients as usual, and the master server publishes the processed messages to the message queue for all slave servers
+4. Slave servers periodically ping the master server to check its status (heartbeat). If the master server does not respond within a given time, the slaves initiate a master re-election process,
+5. The master re-election process happens as follows:
+
+   1. All the slaves are aware of each other, so the one with the smallest addres promotes themselves to a new master position and notify all the other slaves about the update
+   2. The other slaves, will wait for a given period for update. If they don’t hear back in the given time, they will assume the slave has faild and thus will remote it from their list of available slaves and move on to step one of the process to elect the next master
+
+6. The clients should be aware of all server addresses. If a client mistakenly communicates with a slave server, it receives a message notifying it that it isn’t a master. If the client does not receive a response, it means the node is down so it can get rid of it and look for other nodes.
+
+   1. Here a load balancer/directory server could potentially be used but that will introduce another single point failure so it might not be good client experience but it won’t be as relient
+
+The above protocl could be descirbed by the following pseduo code.
+
+```javascript
+
+// Server class
+class Server {
+    String uniqueID
+    String role = "master"
+    String masterAddress = null
+    Database localDatabase
+    MessageQueue messageQueue
+    List<Slave> slaveServers
+    List<Client> clients
+
+    // Server constructor
+    Server(String role, String masterAddress) {
+        uniqueID = generateUniqueID()
+        if (role == "slave") {
+            this.role = "slave"
+            this.masterAddress = masterAddress
+            establishCommunicationWithMaster()
+        }
+    }
+
+    // Establish communication with master server (for slave servers)
+    function establishCommunicationWithMaster() {
+        registerWithMaster()
+        localDatabase = getDatabaseFromMaster()
+        subscribeToUpdatesFromMaster()
+    }
+
+    // Register with the master server
+    function registerWithMaster() {
+        // Send request to master server to register this slave server
+    }
+
+    // Get the latest version of the database from the master server
+    function getDatabaseFromMaster() {
+        // Request and receive the latest version of the database from the master server
+    }
+
+    // Subscribe to updates from the master server
+    function subscribeToUpdatesFromMaster() {
+        // Subscribe to the message queue on the master server for updates
+    }
+
+    // Publish updates to all slave servers
+    function publishUpdatesToSlaves() {
+        // Send updates to the message queue for all slave servers
+    }
+
+    // Process client messages
+    function processClientMessages() {
+        // Process client messages and update local database
+    }
+
+    // Heartbeat function for checking master server status
+    function heartbeat() {
+        // Periodically ping the master server to check its status
+    }
+
+    // Master re-election process
+    function reElectMaster() {
+        // Initiate master re-election process
+    }
+}
+
+// Client class
+class Client {
+    List<Server> serverAddresses
+
+    // Send a message to the server
+    function sendMessage() {
+        // Send the message to the appropriate server
+    }
+
+    // Receive a message from the server
+    function receiveMessage() {
+        // Receive and process the message from the server
+    }
+
+    // Handle server communication errors
+    function handleServerErrors() {
+        // If communication error, update server list and retry
+    }
+}
+
+```
+
 ## File Structure
 
 The source code is organized as follows:
 
+```bash
 ├── src
 │ ├── base_client.py
 │ ├── gui_client.py
@@ -26,179 +147,119 @@ The source code is organized as follows:
 │ ├── test_client.py
 │ ├── test_database.py
 │ └── test_server.py
+```
 
-### src/
+`<details><summary>src/</summary>`
+
+Clients
 
 - `base_client.py`: Contains the BaseClient class, which is a generic chat client implementation.
 - `gui_client.py`: Extends the BaseClient class to create a GUI-based chat client.
-- `__init__.py`: Indicates that this folder is a package.
-- `master_server.py`: Implements the master server logic.
-- `models.py`: Contains the data models used in the application, such as User and Message.
-- `__pycache__`: Stores the compiled Python files.
-- `server.py`: Contains the main server logic, shared between the master and slave servers.
+- `terminal_client.py`: Extends the BaseClient class to create a terminal-based chat client. [Depricated]
+
+Server
+
+- `master_server.py`: Implements the master server service as well as other methods.
 - `slave_server.py`: Implements the slave server logic.
+- `server.py`: Contains the main server logic, shared between the master and slave servers.
+
+Models
+
+- `models.py`: Contains the data models used in the application, such as User and Message.
+
+Grpc setup
+
 - `spec_pb2_grpc.py`: Generated gRPC code for the services defined in the spec.proto file.
 - `spec_pb2.py`: Generated code from the spec.proto file for the message types.
-- `spec_pb2.pyi`: Generated stub file for spec_pb2.py.
+- `spec_pb2.pyi`: Generated stub file for spec_pb2.py
 - `spec.proto`: Protocol buffer definition file for the application's gRPC services and message types.
-- `terminal_client.py`: Extends the BaseClient class to create a terminal-based chat client.
-- `utils.py`: Contains utility functions used throughout the application.
 
-### tests/
+`</details>`
 
-- `test_base_client.py`: Unit tests for the base_client.py file.
+`<details><summary>tests/</summary>`
+
+    `test_base_client.py`: Unit tests for the base_client.py file.
+
 - `test_client.py`: Unit tests for the gui_client.py and terminal_client.py files.
 - `test_database.py`: Unit tests for the models.py file.
 - `test_server.py`: Unit tests for the master_server.py and slave_server.py files.
 
-## Protocol Buffer Definitions
+`</details>`
 
-The application uses Protocol Buffers (protobuf) to define its gRPC services and message types. The `spec.proto` file contains the following service and message definitions:
+## Installation
 
-### ClientAccount
+To install this chat app on your computer follow the following steps.
 
-This service handles communication between clients and servers for user account management and messaging.
+**Clone the repository:**
 
-#### RPCs
-
-- `CreateAccount`: Creates a new user account.
-- `ListUsers`: Lists all users in the database.
-- `Login`: Logs in to a user account.
-- `Send`: Sends a message to another user.
-- `GetMessages`: Retrieves messages for the logged-in user.
-- `GetChat`: Retrieves messages between the logged-in user and another user.
-- `AcknowledgeReceivedMessages`: Acknowledges the receipt of messages by the client.
-- `DeleteAccount`: Deletes a user account.
-- `Logout`: Logs out of a user account.
-
-#### Messages
-
-- `CreateAccountRequest`: Request message for creating a user account
-
-* `ServerResponse`: Response message for server to send back to the client.
-* `AcknowledgeReceivedMessagesRequest`: Request message for acknowledging received messages.
-* `LoginRequest`: Request message for logging in.
-* `SendRequest`: Request message for sending a message.
-* `ReceiveRequest`: Request message for receiving messages.
-* `ChatRequest`: Request message for getting chat messages between two users.
-* `DeleteAccountRequest`: Request message for deleting an account.
-* `Message`: Message object containing sender, content, ID, and timestamp.
-* `Messages`: Response message containing a list of messages.
-* `Empty`: Empty message used for certain RPC calls.
-* `User`: User object containing username and status.
-* `Users`: Response message containing a list of users.
-
-### MasterService
-
-This service handles communication between the master server and slave servers.
-
-#### RPCs
-
-- `RegisterSlave`: Registers a slave server.
-- `HeartBeat`: Periodic check-in by a slave server to the master.
-- `CheckMaster`: Checks the current status of the master server.
-
-#### Messages
-
-- `RegisterSlaveRequest`: Request message for registering a slave server.
-- `RegisterSlaveResponse`: Response message for registering a slave server.
-- `Ack`: Acknowledgment message.
-
-### SlaveService
-
-This service handles communication between slave servers and the master server for receiving updates.
-
-#### RPCs
-
-- `AcceptUpdates`: Accepts updates from the master server.
-- `UpdateMaster`: Updates the master server's address and ID.
-- `UpdateSlaves`: Updates the slave servers with new data.
-
-#### Messages
-
-- `NewMasterRequest`: Request message for updating the master server.
-- `UpdateSlavesRequest`: Request message for updating slave servers.
-- `AcceptUpdatesRequest`: Request message for accepting updates from the master server.
-
-## Components
-
-### Master Server
-
-The master server (`master_server.py`) is responsible for managing and coordinating the slave servers. It accepts new slave registrations and sends updates to the slaves as needed. The master server also handles heartbeats from the slaves to monitor their status.
-
-### Slave Server
-
-The slave server (`slave_server.py`) stores a copy of the application's data and processes client requests. It communicates with the master server to receive updates and inform the master of its current status.
-
-### Base Client
-
-The `base_client.py` file contains the BaseClient class, which is a generic implementation of a chat client. This class can be extended to create different types of chat clients, such as a terminal-based client or a GUI-based client.
-
-### Terminal Client
-
-The `terminal_client.py` file extends the BaseClient class to create a terminal-based chat client. This client allows users to interact with the application using a command-line interface.
-
-### GUI Client
-
-The `gui_client.py` file extends the BaseClient class to create a GUI-based chat client. This client provides a graphical interface for users to interact with the application.
-
-### Models
-
-The `models.py` file contains the data models used in the application, such as User and Message. These models are used to store and manage the application's data.
-
-### Utilities
-
-The `utils.py` file contains utility functions used throughout the application, such as functions for hashing passwords and generating session IDs.
-
-## Testing
-
-The `tests/` directory contains unit tests for various components of the application. These tests help ensure that the application's components function as expected.
-
-- `test_base_client.py`: Unit tests for the base_client.py file.
-- `test_client.py`: Unit tests for the gui_client.py and terminal_client.py files.
-- `test_database.py`: Unit tests for the models.py file.
-- `test_server.py`: Unit tests for the master_server.py and slave_server.py files.
-
-To run the tests, execute the following command from the project's root directory:
-
-```
-python -m unittest discover tests
+```bash
+git clone https://github.com/hileamlakb/jmessage.git
 ```
 
-This command will discover and run all the test files in the `tests/` directory.
-
-## How to Use
-
-To use the chat application, follow these steps:
-
-1. Start the master server by running `master_server.py`:
+**Change directory**
 
 ```
-python src/master_server.py
+cd Jmessage
 ```
 
-2. Start one or more slave servers by running `slave_server.py`:
+**setup virual environment**
 
 ```
-python src/slave_server.py
+python -m venv venv
 ```
 
-3. Start a client instance, either using the terminal-based client or the GUI-based client:
+**Activate virtual environment**
 
-- For the terminal-based client, run:
-
-```
-python src/terminal_client.py
-```
-
-- For the GUI-based client, run:
+on windows
 
 ```
-python src/gui_client.py
+venv\Scripts\activate
 ```
 
-4. Interact with the application by creating user accounts, logging in, sending messages, and managing user accounts through the client interface.
+on Linux/mac:
 
-## Conclusion
+```
+source venv/bin/activate
+```
 
-This documentation provides an overview of the N-failstop fault-tolerant chat application, including its file organization, protocol buffer definitions, components, and usage instructions. The application is designed to be resilient against up to N failstop faults and uses a master-slave architecture to ensure fault tolerance. The gRPC protocol is used for communication between the components, and the application supports both terminal-based and GUI-based clients.
+**Install requirments**
+
+```
+pip install -r requirements.txt
+
+```
+
+You are done setting up!!
+
+## **Usage**
+
+**Start master server**
+
+```
+python src/server.py 1[id] master localhost:2625 [client address] localhost:2626[internal address]
+
+```
+
+**Start as many slaves as you need using master's internal address**
+
+```
+python src/server.py 2 slave localhost:2627 [client address] localhost:2628 [internal address] --master_address=localhost:2626
+```
+
+Don't forget to replace the interal addresses and the ids. The once given here can be used if they are free. Moreover the address don't need to be local.
+
+**Start the client**
+
+```
+python src/gui_client.py -a [client facing addresses 1] [client facing addresses 2] ...
+
+```
+
+## Authors
+
+- Hileamlak Y. (hileamlak@email.com)
+- Jeremy Zhang
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE.md file for details.
