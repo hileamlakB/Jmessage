@@ -58,6 +58,7 @@ class JarvesClientBase:
 
             if len(self.addresses) == 0:
                 print("No server is available.")
+                return
                 self.exit_()
 
             tried = set()
