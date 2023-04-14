@@ -55,7 +55,7 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
         top_frame = ttk.Frame(self)
         top_frame.pack(side=tk.TOP, fill=tk.X)
 
-        print("stub:", self.stub)
+        # print("stub:", self.stub)
         if not self.stub:
             self.retry_button = ttk.Button(
                 top_frame, text="Retry Connection", command=self.retry_connection)
@@ -189,15 +189,18 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
     def relogin(self):
         messagebox.showerror(
             "Error", "Server failed, connected to backup server. Please relogin")
-        self.logged_in_label.pack_forget()
-        self.logout_button.pack_forget()
+        try:
+            self.logged_in_label.pack_forget()
+            self.logout_button.pack_forget()
 
-        self.username_label.pack(side="left")
-        self.username_entry.pack(side="left")
-        self.password_label.pack(side="left")
-        self.password_entry.pack(side="left")
-        self.login_button.pack(side="left")
-        self.signup_button.pack(side="left")
+            self.username_label.pack(side="left")
+            self.username_entry.pack(side="left")
+            self.password_label.pack(side="left")
+            self.password_entry.pack(side="left")
+            self.login_button.pack(side="left")
+            self.signup_button.pack(side="left")
+        except Exception as e:
+            print(e)
 
     def logout(self):
         response = JarvesClientBase.logout(self)
@@ -235,7 +238,7 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
 
         if to and message:
             response = JarvesClientBase.send_message(self, to, message)
-            print(to, message, response)
+            # print(to, message, response)
             if response.error_code == 0:
                 self.message_entry.delete(0, tk.END)
                 # self.display_message(f"You: {message}")
@@ -279,14 +282,15 @@ class JarvesClientGUI(tk.Tk, JarvesClientBase):
                         tk.END, f"{message.from_}: {message.message}\n")
                 self.chat_text.config(state='disabled')
             else:
-                print(response.error_message)
+                pass
+                # print(response.error_message)
 
     def update_notification(self):
 
         while True:
 
             msgs = JarvesClientBase.receive_messages(self)
-            print('messages: ', msgs)
+            # print('messages: ', msgs)
             if msgs:
                 if msgs.error_code == 0:
                     for message in msgs.message:
@@ -332,6 +336,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     addresses = args.addresses
-    print(addresses)
+    # print(addresses)
 
     JarvesClientGUI.run(addresses)

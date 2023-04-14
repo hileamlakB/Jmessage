@@ -19,7 +19,7 @@ def claim_mastery(master_state):
     wathcout for competing masters problem"""
     master_id, master_address = master_state['master_id'], master_state['master_address']
     for _, slave_address in master_state['slaves']:
-        print('trying to update slave', slave_address)
+        # print('trying to update slave', slave_address)
         with grpc.insecure_channel(slave_address) as channel:
             stub = spec_pb2_grpc.SlaveServiceStub(channel)
             print(slave_address, stub, channel)
@@ -29,7 +29,7 @@ def claim_mastery(master_state):
             # response = stub.SIMPLE(spec_pb2.Empty(), timeout=5)
             # print('after simple')
             response = stub.UpdateMaster(update_master_request, timeout=5)
-            print('response', response)
+            # print('response', response)
 
 
 def upgrade_slave(old_state):
@@ -41,7 +41,7 @@ def upgrade_slave(old_state):
     master_state['master_id'] = old_state['slave_id']
     master_state['update_queue'] = queue.Queue()
 
-    print('killing the opersor :)')
+    # print('killing the opersor :)')
     master_state['slave_master_server'].stop(None)
     master_state['slave_master_server'].wait_for_termination()
     master_state['slave_client_server'].stop(None)
@@ -94,7 +94,7 @@ def check_new_master(min_slave, slave_state):
             try:
                 slave_state['slaves'].remove(min_slave)
             except:
-                print('error removing the slave')
+                print('Error removing the slave')
                 pass
 
 # represents a single client
@@ -104,7 +104,7 @@ def slave_heart_beat_checker(slave_state):
 
     while True:
         master_address = slave_state['master_address']
-        print("checkig ", master_address)
+        print("Heartbeat check", master_address)
 
         # Check if the master is alive
         # If not start the election process
@@ -116,7 +116,7 @@ def slave_heart_beat_checker(slave_state):
                     stub = spec_pb2_grpc.MasterServiceStub(channel)
                     heartbeat_request = spec_pb2.Empty()
                     response = stub.HeartBeat(heartbeat_request)
-                    print(response, "Master is alive")
+                    # print(response, "Master is alive")
                     success = True
                     break
                 except Exception as e:

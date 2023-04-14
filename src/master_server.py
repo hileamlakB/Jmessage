@@ -122,16 +122,16 @@ class ClientService(spec_pb2_grpc.ClientAccountServicer):
                 msg2 = session.query(MessageModel).filter_by(
                     id=msg.id).first()
 
-                print("before updating slaves")
+                # print("before updating slaves")
                 update_info = pickle.dumps(('messages', "add", msg2))
-                print(update_info)
+                # print(update_info)
                 try:
                     self.update_queue.put(update_info)
                 except Exception as e:
                     print(e)
         # Remove any remaining session
         session.remove()
-        print("responding with server response")
+        # print("responding with server response")
         return spec_pb2.ServerResponse(error_code=status_code, error_message=status_message)
 
     def ListUsers(self, request, context):
@@ -175,7 +175,7 @@ class ClientService(spec_pb2_grpc.ClientAccountServicer):
                     msgs.error_code)
             else:
                 for message in messages:
-                    print(message.is_received)
+                    # print(message.is_received)
                     msg = msgs.message.add()
                     msg.from_ = message.sender.username
                     msg.message = message.content

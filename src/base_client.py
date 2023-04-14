@@ -59,13 +59,13 @@ class JarvesClientBase:
             if len(self.addresses) == 0:
                 print("No server is available.")
                 return
-                self.exit_()
 
             tried = set()
             retries = 0
             success = False
             while retries < self.max_retries:
                 try:
+                    print("Trying to connect to ", self.addresses[0])
                     self.channel = grpc.insecure_channel(self.addresses[0])
                     self.stub = spec_pb2_grpc.ClientAccountStub(self.channel)
                     response = self.stub.ListUsers(spec_pb2.Empty())
@@ -79,7 +79,7 @@ class JarvesClientBase:
                         if (self.addresses[0] in tried):
                             # we have visted all the addresses and nodes are not responding
                             # so we can exit
-                            self._exit()
+                            self.exit()
                             return
 
                         tried.add(self.addresses[0])
@@ -96,11 +96,15 @@ class JarvesClientBase:
             print("Failed to establish connection after maximum retries.")
             # if reachingout to the server multiple times doesn't get response
             # delete this address as it is usless
+            # you want to relogin here, because session data isn't
+            # replicated accross databases
             self.addresses.pop(0)
-            print(self.addresses)
-            return self.connect()
-        else:
+            # print(self.addresses)
             self.relogin()
+            return
+            # return self.connect()
+        else:
+            print(f"Connected to {self.addresses[0]}")
 
     @reconnect_on_error
     def list_users(self):

@@ -255,6 +255,12 @@ python src/gui_client.py -a [client facing addresses 1] [client facing addresses
 
 ```
 
+### Notes
+
+If you want to experiment with stoping nodes on linux you can use,
+
+`Ctrl-C(SIGINT),`, on windows you can use `Ctrl-BREAK` (and if you don't have break key on your keyboard, you can use `FN-Ctrl-B`)
+
 ## Authors
 
 - Hileamlak Y. (hileamlak@email.com)

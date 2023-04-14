@@ -41,7 +41,7 @@ class SlaveService(spec_pb2_grpc.SlaveServiceServicer):
         data = pickle.loads(update_data)
         # update the slaves list
         table, action, obj = data
-        print(action, obj)
+        # print(action, obj)
         from sqlalchemy import inspect
 
         def object_as_dict(obj_):
@@ -53,7 +53,7 @@ class SlaveService(spec_pb2_grpc.SlaveServiceServicer):
         # Recreate the object from the data
         new_obj = table_class_mapping[table]()
         for key, value in obj_dict.items():
-            print(key, value)
+            # print(key, value)
             setattr(new_obj, key, value)
 
         if action == 'add':
@@ -67,21 +67,21 @@ class SlaveService(spec_pb2_grpc.SlaveServiceServicer):
         # print database to check if it is updated
         # query all users
         Users = session.query(UserModel).all()
-        print('after update', Users)
+        # print('after update', Users)
 
     def UpdateMaster(self, request, context):
-        print("UPDATING master", flush=True)
+        # print("UPDATING master", flush=True)
         master_address, master_id = request.new_master_address, request.new_master_id
-        print('new master', master_address, master_id, flush=True)
+        # print('new master', master_address, master_id, flush=True)
         assign_new_master(self.state, master_address, master_id)
         return spec_pb2.Ack(error_code=0, error_message="")
 
     def UpdateSlaves(self, request, context):
-        print("Updating slaves for slave")
+        # print("Updating slaves for slave")
         new_slave = pickle.loads(request.update_data)
         # remove the current slave from the list
         self.state['slaves'].append(new_slave)
-        print(new_slave, self.state['slaves'])
+        # print(new_slave, self.state['slaves'])
         return spec_pb2.Ack(error_code=0, error_message="")
 
 
@@ -126,8 +126,15 @@ def request_update(slave_state):
 
 
 def assign_new_master(state, master_address, master_id):
-    print("accepting new master")
+    print("Accepting new master")
     state['master_address'] = master_address
+    # this is only required for windows that has file lockers
+    # print('db_eninge in ', 'db_engine' in state)
+    if 'db_engine' in state:
+        try:
+            state['db_engine'].dispose()
+        except Exception as e:
+            print('deleting engine', e)
     database_engine = init_db(state['database_url'], drop_tables=True)
     SessionFactory = get_session_factory(database_engine)
     state['database_engine'] = database_engine
@@ -145,7 +152,7 @@ def assign_new_master(state, master_address, master_id):
     except:
         pass
 
-    print('new master assignment complete')
+    print('Assigning new master complete')
 
 
 class ClientServiceSlave(spec_pb2_grpc.ClientAccountServicer):
@@ -175,5 +182,5 @@ def server_slave_master(slave_state):
 
     server.add_insecure_port(address)
     server.start()
-    print("Slaver server started, listening on " + address)
+    print("Slave server started, listening on " + address)
     return server
