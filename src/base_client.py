@@ -79,7 +79,7 @@ class JarvesClientBase:
                         if (self.addresses[0] in tried):
                             # we have visted all the addresses and nodes are not responding
                             # so we can exit
-                            self.exit()
+                            self.exit_()
                             return
 
                         tried.add(self.addresses[0])

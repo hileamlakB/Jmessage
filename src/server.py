@@ -22,10 +22,10 @@ def claim_mastery(master_state):
         # print('trying to update slave', slave_address)
         with grpc.insecure_channel(slave_address) as channel:
             stub = spec_pb2_grpc.SlaveServiceStub(channel)
-            print(slave_address, stub, channel)
+            # print(slave_address, stub, channel)
             update_master_request = spec_pb2.NewMasterRequest(
                 new_master_address=master_address, new_master_id=master_id)
-            print(update_master_request)
+            # print(update_master_request)
             # response = stub.SIMPLE(spec_pb2.Empty(), timeout=5)
             # print('after simple')
             response = stub.UpdateMaster(update_master_request, timeout=5)

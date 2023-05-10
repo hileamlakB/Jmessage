@@ -168,7 +168,7 @@ def serve_slave_client(slave_state):
         ClientServiceSlave(), server)
     server.add_insecure_port(client_address)
     server.start()
-    print("Server started, listening on ", client_address)
+    print("Client server started, listening on ", client_address)
     return server
 
 
